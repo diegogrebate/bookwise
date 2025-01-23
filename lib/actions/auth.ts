@@ -8,6 +8,8 @@ import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { ratelimit } from "../ratelimit";
 import { redirect } from "next/navigation";
+import { workflowClient } from "@/lib/workflow";
+import config from "../config";
 
 export async function signInWithCredentials(
   params: Pick<AuthCredentials, "email" | "password">
@@ -65,6 +67,14 @@ export async function signUp(
       universityId,
       universityCard,
       password: hashedPassword,
+    });
+
+    await workflowClient.trigger({
+      url: `${config.env.prodApiEndpoint}/api/workflows/onboarding`,
+      body: {
+        email,
+        fullName,
+      },
     });
 
     const signInResult = await signInWithCredentials({ email, password });
